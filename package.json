@@ -1,0 +1,30 @@
+{
+  "name": "gister",
+  "author": "Josh Perez <josh@goatslacker.com>",
+  "version": "0.0.1",
+  "description": "gist API wrapper for editing, creating and retrieving.",
+
+  "keywords": [
+    "gist",
+    "github"
+  ],
+
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/goatslacker/gister.git"
+  },
+
+  "licenses": ["MIT"],
+
+  "dependencies": {
+    "request": "0.2.x"
+  },
+
+  "devDependencies": {
+    "vows": "0.5.x"
+  },
+
+  "engines": {
+    "node": ">= 0.4.0"
+  }
+}
