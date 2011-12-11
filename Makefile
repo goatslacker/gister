@@ -9,7 +9,7 @@ docs:
 	@docco gister.js
 
 gh-pages:
-	@mv docco/* . && mv gister.html index.html
+	@mv docs/* . && mv gister.html index.html
 
 cover:
 	@jscoverage . /tmp/jscoverage --exclude=node_modules --exclude=packages --exclude=tests && \
