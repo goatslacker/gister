@@ -62,6 +62,10 @@ Gist.prototype.sync = function (data) {
 };
 
 Gist.prototype.put = function (data) {
+  if (!this.gist_id) {
+    return this.emit('error:gist_id');
+  }
+
   var opts = {
     uri: 'https://gist.github.com/gists/' + this.gist_id,
     method: 'PUT'

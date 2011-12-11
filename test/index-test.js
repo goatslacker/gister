@@ -1,9 +1,12 @@
 var vows = require('vows');
 var assert = require('assert');
-var Gist = require('../gister');
 
 var response = require('./mock/response');
 var request = require('./mock/request');
+
+var Gist = require((process.argv[3]
+  && process.argv[3].indexOf("--cover") !== -1) ?
+  '../jscoverage/gister' : '../gister');
 
 function newgist(id) {
   var gist = new Gist({
@@ -16,9 +19,9 @@ function newgist(id) {
 }
 
 vows.describe("gister").addBatch({
-  "when I get a gist": {
+  "when getting a gist": {
 
-    "and I don't provide a gist id": {
+    "and not providing a gist id": {
       topic: function () {
         var gist = newgist();
         gist.on('error:gist_id', this.callback);
@@ -45,9 +48,9 @@ vows.describe("gister").addBatch({
     }
   },
 
-  "when I synchronize the gist": {
+  "when synchronizing the gist": {
 
-    "and I provide a gist id": {
+    "and providing a gist id": {
       topic: function () {
         var gist = newgist(1);
         gist.on('put', function (body) {
@@ -64,15 +67,111 @@ vows.describe("gister").addBatch({
     "with no gist id": {
       topic: function () {
         var gist = newgist();
-        gist.on('post', function (body, gist_id) {
-          this.callback(body, gist_id);
-        }.bind(this));
+        gist.on('post', this.callback);
         gist.sync("contents of gist");
       },
 
       "should create a new gist": function (topic, id) {
         assert.deepEqual(topic, response.post);
         assert.equal(id, "1");
+      }
+    }
+  },
+
+  "when editing a gist": {
+
+    "and providing token, username and gist id": {
+      topic: function () {
+        var gist = newgist(1);
+        gist.on('put', function (body) {
+          this.callback(null, body);
+        }.bind(this));
+        gist.put("contents of gist");
+      },
+
+      "should receive a put response": function (topic) {
+        assert.deepEqual(topic, response.put);
+      }
+    },
+
+    "and not providing a gist id": {
+      topic: function () {
+        var gist = newgist();
+        gist.on('error:gist_id', this.callback);
+        gist.get();
+      },
+
+      "should receive an error": function () {
+        // the test will pass if this event is emitted
+      }
+    },
+
+    "without providing a token": {
+      topic: function () {
+        var gist = new Gist({ username: "octocat", gist_id: 1 });
+        gist.request = request;
+        gist.on('error:credentials', this.callback);
+        gist.put("contents of gist");
+      },
+
+      "should receive an error": function () {
+        // the test will pass if this event is emitted
+      }
+    },
+
+    "without providing a username": {
+      topic: function () {
+        var gist = new Gist({ token: "abc123", gist_id: 1 });
+        gist.request = request;
+        gist.on('error:credentials', this.callback);
+        gist.put("contents of gist");
+      },
+
+      "should receive an error": function () {
+        // the test will pass if this event is emitted
+      }
+    }
+  },
+
+  "when creating a new gist": {
+
+    "and authenticated": {
+      topic: function () {
+        var gist = newgist();
+        gist.on('post', function (body) {
+          this.callback(null, body);
+        }.bind(this));
+        gist.post("contents of gist");
+      },
+
+      "should receive a post response": function (topic) {
+        assert.deepEqual(topic, response.post);
+      }
+    },
+
+    "without providing a token": {
+      topic: function () {
+        var gist = new Gist({ username: "octocat" });
+        gist.request = request;
+        gist.on('error:credentials', this.callback);
+        gist.post("contents of gist");
+      },
+
+      "should receive an error": function () {
+        // the test will pass if this event is emitted
+      }
+    },
+
+    "without providing a username": {
+      topic: function () {
+        var gist = new Gist({ token: "abc123" });
+        gist.request = request;
+        gist.on('error:credentials', this.callback);
+        gist.post("contents of gist");
+      },
+
+      "should receive an error": function () {
+        // the test will pass if this event is emitted
       }
     }
   }
