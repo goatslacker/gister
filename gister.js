@@ -1,6 +1,16 @@
 var request = require('request');
 var EventEmitter = require('events').EventEmitter;
 
+// ## Gist
+//
+// Constructs a new Gist object.
+// Instance of EventEmitter.
+//
+// **o** is an Object which contains
+//
+// * __username__ GitHub username
+// * __token__ Your secret API token, can be found in [Account Settings](https://github.com/account/admin)
+// * __gist_id__ (optional) The Gist ID
 function Gist(o) {
   EventEmitter.call(this);
 
@@ -27,11 +37,7 @@ function response(statusCode, cb) {
   };
 }
 
-Gist.prototype.request = function (opts, cb) {
-  return request(opts, cb);
-};
-
-Gist.prototype.xhr = function (opts, data, cb) {
+function xhr(opts, data, cb) {
   if (data) {
     if (!this.username || !this.token) {
       return this.emit("error:credentials");
@@ -45,20 +51,41 @@ Gist.prototype.xhr = function (opts, data, cb) {
   }
 
   return this.request(opts, cb);
+}
+
+// Uses request to talk to GitHub API.
+// Provided in the prototype so request can be mocked for tests.
+Gist.prototype.request = function (opts, cb) {
+  return request(opts, cb);
 };
 
+// Retrieves a gist from gist.github.com
+//
+// Uses `gist_id` to determine which gist it'll retrieve
+// compatible with GitHub API v3
+//
+// If no `gist_id` is provided, event **error:gist_id** is emitted.
+//
+// On success, event **get** is emitted with `body` passed.
+// `body` is the response from GitHub.
 Gist.prototype.get = function () {
   if (!this.gist_id) {
     return this.emit('error:gist_id');
   }
 
   var uri = 'https://api.github.com/gists/' + this.gist_id;
+  var req = xhr.bind(this);
 
-  this.xhr({ uri: uri }, null, response(200, function (body) {
+  req({ uri: uri }, null, response(200, function (body) {
     this.emit('get', body);
   }.bind(this)));
 };
 
+// Convenience method which will create a new gist
+// if `gist_id` is not provided. If it is provided,
+// the gist will be updated.
+//
+// Parameter __data__ is the data to post/put to gist
 Gist.prototype.sync = function (data) {
   if (!this.gist_id) {
     return this.post(data);
@@ -67,6 +94,14 @@ Gist.prototype.sync = function (data) {
   }
 };
 
+// Edits a gist
+//
+// Compatible with GitHub API v2. Success is status code 302.
+//
+// If no `gist_id` is provided, event **error:gist_id** is emitted.
+//
+// On success, event **put** is emitted with
+// `body`, the response from GitHub.
 Gist.prototype.put = function (data) {
   if (!this.gist_id) {
     return this.emit('error:gist_id');
@@ -76,19 +111,27 @@ Gist.prototype.put = function (data) {
     uri: 'https://gist.github.com/gists/' + this.gist_id,
     method: 'PUT'
   };
+  var req = xhr.bind(this);
 
-  this.xhr(opts, data, response(302, function (body) {
+  req(opts, data, response(302, function (body) {
     this.emit('put', body);
   }.bind(this)));
 };
 
+// Creates a new gist
+//
+// Compatible with GitHub API v2. Success is status code 302.
+//
+// On success, event **post** is emitted with
+// `body` as well as the new `gist_id`.
 Gist.prototype.post = function (data) {
   var opts = {
     uri: 'https://gist.github.com/gists',
     method: 'POST'
   };
+  var req = xhr.bind(this);
 
-  this.xhr(opts, data, response(302, function (body, res) {
+  req(opts, data, response(302, function (body, res) {
     var gist = /(\d+)/;
     var location = res.headers.location;
     var gist_id = null;

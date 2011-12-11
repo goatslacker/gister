@@ -4,4 +4,4 @@
 
 node.js module for gist.github.com -- edit, create, and retrieve gists.
 
-
+[Read annotated source](http://goatslacker.github.com/gister)
