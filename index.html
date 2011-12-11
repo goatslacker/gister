@@ -50,7 +50,7 @@ Instance of EventEmitter.</p>
   <span class="p">}</span>
 
   <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">request</span><span class="p">(</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">cb</span><span class="p">);</span>
-<span class="p">};</span></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>Uses request to talk to GitHub API.
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>Uses request to talk to GitHub API.
 Provided in the prototype so request can be mocked for tests.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Gist</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">request</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">cb</span><span class="p">)</span> <span class="p">{</span>
   <span class="k">return</span> <span class="nx">request</span><span class="p">(</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">cb</span><span class="p">);</span>
 <span class="p">};</span></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <p>Retrieves a gist from gist.github.com</p>
@@ -76,11 +76,11 @@ compatible with GitHub API v3</p>
 if <code>gist_id</code> is not provided. If it is provided,
 the gist will be updated.</p>
 
-<p>Parameter <strong>data</strong> is the data to post/put to gist</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Gist</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">sync</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+<p>Parameter <strong>data</strong> is the data to create/edit to gist</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Gist</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">sync</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">gist_id</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">create</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
   <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">put</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">edit</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
   <span class="p">}</span>
 <span class="p">};</span></pre></div>             </td>           </tr>                               <tr id="section-6">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-6">&#182;</a>               </div>               <p>Edits a gist</p>
 
@@ -88,8 +88,8 @@ the gist will be updated.</p>
 
 <p>If no <code>gist_id</code> is provided, event <strong>error:gist_id</strong> is emitted.</p>
 
-<p>On success, event <strong>put</strong> is emitted with
-<code>body</code>, the response from GitHub.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Gist</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">put</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+<p>On success, event <strong>updated</strong> is emitted with
+<code>body</code>, the response from GitHub.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Gist</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">edit</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">gist_id</span><span class="p">)</span> <span class="p">{</span>
     <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s1">&#39;error:gist_id&#39;</span><span class="p">);</span>
   <span class="p">}</span>
@@ -101,14 +101,14 @@ the gist will be updated.</p>
   <span class="kd">var</span> <span class="nx">req</span> <span class="o">=</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
 
   <span class="nx">req</span><span class="p">(</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">response</span><span class="p">(</span><span class="mi">302</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">body</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s1">&#39;put&#39;</span><span class="p">,</span> <span class="nx">body</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s1">&#39;updated&#39;</span><span class="p">,</span> <span class="nx">body</span><span class="p">);</span>
   <span class="p">}.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">)));</span>
 <span class="p">};</span></pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <p>Creates a new gist</p>
 
 <p>Compatible with GitHub API v2. Success is status code 302.</p>
 
-<p>On success, event <strong>post</strong> is emitted with
-<code>body</code> as well as the new <code>gist_id</code>.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Gist</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">post</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+<p>On success, event <strong>created</strong> is emitted with
+<code>body</code> as well as the new <code>gist_id</code>.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Gist</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">create</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
   <span class="kd">var</span> <span class="nx">opts</span> <span class="o">=</span> <span class="p">{</span>
     <span class="nx">uri</span><span class="o">:</span> <span class="s1">&#39;https://gist.github.com/gists&#39;</span><span class="p">,</span>
     <span class="nx">method</span><span class="o">:</span> <span class="s1">&#39;POST&#39;</span>
@@ -124,7 +124,7 @@ the gist will be updated.</p>
       <span class="nx">gist_id</span> <span class="o">=</span> <span class="nx">gist</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="nx">location</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
     <span class="p">}</span>
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="nx">body</span><span class="p">,</span> <span class="nx">gist_id</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s1">&#39;created&#39;</span><span class="p">,</span> <span class="nx">body</span><span class="p">,</span> <span class="nx">gist_id</span><span class="p">);</span>
   <span class="p">}.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">)));</span>
 <span class="p">};</span>
 
