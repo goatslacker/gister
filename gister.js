@@ -49,8 +49,6 @@ Gist.prototype.get = function () {
 };
 
 Gist.prototype.sync = function (data) {
-  this.checkCredentials();
-
   if (!this.gist_id) {
     return this.post(data);
   } else {
@@ -80,7 +78,15 @@ Gist.prototype.post = function (data) {
   var opts = this.getRequest('https://gist.github.com/gists', data);
 
   request.post(opts, response(302, function (body, res) {
-    this.emit('post', body, res);
+    var gist = /(\d+)/;
+    var location = res.headers.location;
+    var gist_id = null;
+
+    if (gist.test(location)) {
+      gist_id = gist.exec(location)[0];
+    }
+
+    this.emit('post', body, gist_id);
   }.bind(this)));
 };
 
