@@ -23,17 +23,22 @@ function response(statusCode, cb) {
   };
 }
 
-Gist.prototype.getRequest = function (uri, data) {
-  return {
-    uri: uri,
-    form: {
+Gist.prototype.request = function (opts, data, cb) {
+  if (data) {
+    if (!this.username || !this.token) {
+      return this.emit("error:credentials");
+    }
+
+    opts.form = {
       login: this.username,
       token: this.token,
       "file_contents[gistfile1json]": data,
       "file_name[gistfile1json]": "", // TODO
       "file_ext[gistfile1json]": "" // TODO
-    }
-  };
+    };
+  }
+
+  return request(opts, cb);
 };
 
 Gist.prototype.get = function () {
@@ -43,7 +48,7 @@ Gist.prototype.get = function () {
 
   var uri = 'https://api.github.com/gists/' + this.gist_id;
 
-  request(uri, response(200, function (body) {
+  this.request({ uri: uri }, null, response(200, function (body) {
     this.emit('get', body);
   }.bind(this)));
 };
@@ -56,28 +61,24 @@ Gist.prototype.sync = function (data) {
   }
 };
 
-Gist.prototype.checkCredentials = function () {
-  if (!this.username || !this.token) {
-    return this.emit("error:credentials");
-  }
-};
-
 Gist.prototype.put = function (data) {
-  this.checkCredentials();
+  var opts = {
+    uri: 'https://gist.github.com/gists/' + this.gist_id,
+    method: 'PUT'
+  };
 
-  var opts = this.getRequest('https://gist.github.com/gists/' + this.gist_id, data);
-
-  request.put(opts, response(302, function (body) {
+  this.request.put(opts, data, response(302, function (body) {
     this.emit('put', body);
   }.bind(this)));
 };
 
 Gist.prototype.post = function (data) {
-  this.checkCredentials();
+  var opts = {
+    uri: 'https://gist.github.com/gists',
+    method: 'POST'
+  };
 
-  var opts = this.getRequest('https://gist.github.com/gists', data);
-
-  request.post(opts, response(302, function (body, res) {
+  this.request(opts, data, response(302, function (body, res) {
     var gist = /(\d+)/;
     var location = res.headers.location;
     var gist_id = null;
