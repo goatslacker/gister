@@ -1,29 +1,32 @@
 {
   "name": "gister",
-  "author": "Josh Perez <josh@goatslacker.com>",
   "version": "0.0.1",
+  "author": {
+    "name": "Josh Perez",
+    "email": "josh@goatslacker.com",
+    "url": "http://github.com/goatslacker"
+  },
   "description": "gist API wrapper for editing, creating and retrieving.",
-
-  "keywords": [
-    "gist",
-    "github"
-  ],
-
+  "homepage": "http://github.com/goatslacker/gister",
+  "keywords": ["gist", "github"],
   "repository": {
     "type": "git",
     "url": "https://github.com/goatslacker/gister.git"
   },
-
-  "licenses": ["MIT"],
-
+  "license": {
+    "type": "MIT",
+    "url": "http://www.opensource.org/licenses/mit-license.php"
+  },
   "dependencies": {
     "request": "2.2.x"
   },
-
   "devDependencies": {
     "vows": "0.5.x"
   },
-
+  "main": "gister.js",
+  "scripts": {
+    "test": "vows --spec"
+  },
   "engines": {
     "node": ">= 0.4.0"
   }
