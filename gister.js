@@ -4,6 +4,8 @@ var EventEmitter = require('events').EventEmitter;
 function Gist(o) {
   EventEmitter.call(this);
 
+  o = o || {};
+
   this.username = o.username;
   this.token = o.token;
   this.gist_id = o.gist_id;
@@ -32,9 +34,7 @@ Gist.prototype.request = function (opts, data, cb) {
     opts.form = {
       login: this.username,
       token: this.token,
-      "file_contents[gistfile1json]": data,
-      "file_name[gistfile1json]": "", // TODO
-      "file_ext[gistfile1json]": "" // TODO
+      "file_contents[gistfile1json]": data
     };
   }
 
@@ -67,7 +67,7 @@ Gist.prototype.put = function (data) {
     method: 'PUT'
   };
 
-  this.request.put(opts, data, response(302, function (body) {
+  this.request(opts, data, response(302, function (body) {
     this.emit('put', body);
   }.bind(this)));
 };
