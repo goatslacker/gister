@@ -45,6 +45,40 @@ vows.describe("gister").addBatch({
       "should return the body": function (topic) {
         assert.deepEqual(topic, response.get);
       }
+    },
+
+    "and an error is returned from request": {
+      topic: function () {
+        var gist = new Gist({ gist_id: 1 });
+        gist.request = function (statusCode, cb) {
+          cb(new Error(), { statusCode: 200 }, {});
+        };
+        this.callback(null, gist);
+      },
+
+      "should raise an exception": function (gist) {
+        function err() {
+          gist.get();
+        }
+        assert.throws(err, Error);
+      }
+    },
+
+    "and the response statusCode is not 200 OK": {
+      topic: function () {
+        var gist = new Gist({ gist_id: 1 });
+        gist.request = function (statusCode, cb) {
+          cb(null, { statusCode: 404 }, {});
+        };
+        this.callback(null, gist);
+      },
+
+      "should raise an exception": function (gist) {
+        function err() {
+          gist.get();
+        }
+        assert.throws(err, Error);
+      }
     }
   },
 
@@ -98,7 +132,7 @@ vows.describe("gister").addBatch({
       topic: function () {
         var gist = newgist();
         gist.on('error:gist_id', this.callback);
-        gist.get();
+        gist.put();
       },
 
       "should receive an error": function () {

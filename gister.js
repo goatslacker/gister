@@ -15,17 +15,23 @@ Gist.prototype = Object.create(EventEmitter.prototype);
 
 function response(statusCode, cb) {
   return function (err, response, body) {
-    if (err) throw err;
+    if (err) {
+      throw err;
+    }
 
     if (response.statusCode !== statusCode) {
       throw new Error(body);
+    } else {
+      cb(body, response);
     }
-
-    cb && cb(body, response);
   };
 }
 
-Gist.prototype.request = function (opts, data, cb) {
+Gist.prototype.request = function (opts, cb) {
+  return request(opts, cb);
+};
+
+Gist.prototype.xhr = function (opts, data, cb) {
   if (data) {
     if (!this.username || !this.token) {
       return this.emit("error:credentials");
@@ -38,7 +44,7 @@ Gist.prototype.request = function (opts, data, cb) {
     };
   }
 
-  return request(opts, cb);
+  return this.request(opts, cb);
 };
 
 Gist.prototype.get = function () {
@@ -48,7 +54,7 @@ Gist.prototype.get = function () {
 
   var uri = 'https://api.github.com/gists/' + this.gist_id;
 
-  this.request({ uri: uri }, null, response(200, function (body) {
+  this.xhr({ uri: uri }, null, response(200, function (body) {
     this.emit('get', body);
   }.bind(this)));
 };
@@ -71,7 +77,7 @@ Gist.prototype.put = function (data) {
     method: 'PUT'
   };
 
-  this.request(opts, data, response(302, function (body) {
+  this.xhr(opts, data, response(302, function (body) {
     this.emit('put', body);
   }.bind(this)));
 };
@@ -82,7 +88,7 @@ Gist.prototype.post = function (data) {
     method: 'POST'
   };
 
-  this.request(opts, data, response(302, function (body, res) {
+  this.xhr(opts, data, response(302, function (body, res) {
     var gist = /(\d+)/;
     var location = res.headers.location;
     var gist_id = null;

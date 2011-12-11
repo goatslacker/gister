@@ -1,19 +1,7 @@
 var response = require('./response');
 
-function request(opts, data, cb) {
+function request(opts, cb) {
   var statusCode = 0;
-
-  if (data) {
-    if (!this.username || !this.token) {
-      return this.emit("error:credentials");
-    }
-
-    opts.form = {
-      login: this.username,
-      token: this.token,
-      "file_contents[gistfile1json]": data
-    };
-  }
 
   opts.method = opts.method || "GET";
 
