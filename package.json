@@ -17,7 +17,7 @@
   "licenses": ["MIT"],
 
   "dependencies": {
-    "request": "0.2.x"
+    "request": "2.2.x"
   },
 
   "devDependencies": {

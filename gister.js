@@ -1,7 +1,7 @@
 var request = require('request');
 var EventEmitter = require('events').EventEmitter;
 
-function GitHub(o) {
+function Gist(o) {
   EventEmitter.call(this);
 
   this.username = o.username;
@@ -9,7 +9,7 @@ function GitHub(o) {
   this.gist_id = o.gist_id;
 }
 
-GitHub.prototype = Object.create(EventEmitter.prototype);
+Gist.prototype = Object.create(EventEmitter.prototype);
 
 function response(statusCode, cb) {
   return function (err, response, body) {
@@ -23,7 +23,7 @@ function response(statusCode, cb) {
   };
 }
 
-GitHub.prototype.getRequest = function (uri, data) {
+Gist.prototype.getRequest = function (uri, data) {
   return {
     uri: uri,
     form: {
@@ -36,7 +36,7 @@ GitHub.prototype.getRequest = function (uri, data) {
   };
 };
 
-GitHub.prototype.get = function () {
+Gist.prototype.get = function () {
   if (!this.gist_id) {
     return this.emit('error:gist_id');
   }
@@ -48,7 +48,7 @@ GitHub.prototype.get = function () {
   }.bind(this)));
 };
 
-GitHub.prototype.sync = function (data) {
+Gist.prototype.sync = function (data) {
   this.checkCredentials();
 
   if (!this.gist_id) {
@@ -58,13 +58,13 @@ GitHub.prototype.sync = function (data) {
   }
 };
 
-GitHub.prototype.checkCredentials = function () {
+Gist.prototype.checkCredentials = function () {
   if (!this.username || !this.token) {
     return this.emit("error:credentials");
   }
 };
 
-GitHub.prototype.put = function (data) {
+Gist.prototype.put = function (data) {
   this.checkCredentials();
 
   var opts = this.getRequest('https://gist.github.com/gists/' + this.gist_id, data);
@@ -74,7 +74,7 @@ GitHub.prototype.put = function (data) {
   }.bind(this)));
 };
 
-GitHub.prototype.post = function (data) {
+Gist.prototype.post = function (data) {
   this.checkCredentials();
 
   var opts = this.getRequest('https://gist.github.com/gists', data);
@@ -84,4 +84,4 @@ GitHub.prototype.post = function (data) {
   }.bind(this)));
 };
 
-module.exports = GitHub;
+module.exports = Gist;
