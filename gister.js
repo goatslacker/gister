@@ -85,12 +85,12 @@ Gist.prototype.get = function () {
 // if `gist_id` is not provided. If it is provided,
 // the gist will be updated.
 //
-// Parameter __data__ is the data to post/put to gist
+// Parameter __data__ is the data to create/edit to gist
 Gist.prototype.sync = function (data) {
   if (!this.gist_id) {
-    return this.post(data);
+    return this.create(data);
   } else {
-    return this.put(data);
+    return this.edit(data);
   }
 };
 
@@ -100,9 +100,9 @@ Gist.prototype.sync = function (data) {
 //
 // If no `gist_id` is provided, event **error:gist_id** is emitted.
 //
-// On success, event **put** is emitted with
+// On success, event **updated** is emitted with
 // `body`, the response from GitHub.
-Gist.prototype.put = function (data) {
+Gist.prototype.edit = function (data) {
   if (!this.gist_id) {
     return this.emit('error:gist_id');
   }
@@ -114,7 +114,7 @@ Gist.prototype.put = function (data) {
   var req = xhr.bind(this);
 
   req(opts, data, response(302, function (body) {
-    this.emit('put', body);
+    this.emit('updated', body);
   }.bind(this)));
 };
 
@@ -122,9 +122,9 @@ Gist.prototype.put = function (data) {
 //
 // Compatible with GitHub API v2. Success is status code 302.
 //
-// On success, event **post** is emitted with
+// On success, event **created** is emitted with
 // `body` as well as the new `gist_id`.
-Gist.prototype.post = function (data) {
+Gist.prototype.create = function (data) {
   var opts = {
     uri: 'https://gist.github.com/gists',
     method: 'POST'
@@ -140,7 +140,7 @@ Gist.prototype.post = function (data) {
       gist_id = gist.exec(location)[0];
     }
 
-    this.emit('post', body, gist_id);
+    this.emit('created', body, gist_id);
   }.bind(this)));
 };
 

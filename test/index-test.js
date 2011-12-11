@@ -87,7 +87,7 @@ vows.describe("gister").addBatch({
     "and providing a gist id": {
       topic: function () {
         var gist = newgist(1);
-        gist.on('put', function (body) {
+        gist.on('updated', function (body) {
           this.callback(null, body);
         }.bind(this));
         gist.sync("contents of gist");
@@ -101,7 +101,7 @@ vows.describe("gister").addBatch({
     "with no gist id": {
       topic: function () {
         var gist = newgist();
-        gist.on('post', this.callback);
+        gist.on('created', this.callback);
         gist.sync("contents of gist");
       },
 
@@ -117,13 +117,13 @@ vows.describe("gister").addBatch({
     "and providing token, username and gist id": {
       topic: function () {
         var gist = newgist(1);
-        gist.on('put', function (body) {
+        gist.on('updated', function (body) {
           this.callback(null, body);
         }.bind(this));
-        gist.put("contents of gist");
+        gist.edit("contents of gist");
       },
 
-      "should receive a put response": function (topic) {
+      "should receive a response": function (topic) {
         assert.deepEqual(topic, response.put);
       }
     },
@@ -132,7 +132,7 @@ vows.describe("gister").addBatch({
       topic: function () {
         var gist = newgist();
         gist.on('error:gist_id', this.callback);
-        gist.put();
+        gist.edit();
       },
 
       "should receive an error": function () {
@@ -145,7 +145,7 @@ vows.describe("gister").addBatch({
         var gist = new Gist({ username: "octocat", gist_id: 1 });
         gist.request = request;
         gist.on('error:credentials', this.callback);
-        gist.put("contents of gist");
+        gist.edit("contents of gist");
       },
 
       "should receive an error": function () {
@@ -158,7 +158,7 @@ vows.describe("gister").addBatch({
         var gist = new Gist({ token: "abc123", gist_id: 1 });
         gist.request = request;
         gist.on('error:credentials', this.callback);
-        gist.put("contents of gist");
+        gist.edit("contents of gist");
       },
 
       "should receive an error": function () {
@@ -172,13 +172,13 @@ vows.describe("gister").addBatch({
     "and authenticated": {
       topic: function () {
         var gist = newgist();
-        gist.on('post', function (body) {
+        gist.on('created', function (body) {
           this.callback(null, body);
         }.bind(this));
-        gist.post("contents of gist");
+        gist.create("contents of gist");
       },
 
-      "should receive a post response": function (topic) {
+      "should receive a response": function (topic) {
         assert.deepEqual(topic, response.post);
       }
     },
@@ -188,7 +188,7 @@ vows.describe("gister").addBatch({
         var gist = new Gist({ username: "octocat" });
         gist.request = request;
         gist.on('error:credentials', this.callback);
-        gist.post("contents of gist");
+        gist.create("contents of gist");
       },
 
       "should receive an error": function () {
@@ -201,7 +201,7 @@ vows.describe("gister").addBatch({
         var gist = new Gist({ token: "abc123" });
         gist.request = request;
         gist.on('error:credentials', this.callback);
-        gist.post("contents of gist");
+        gist.create("contents of gist");
       },
 
       "should receive an error": function () {
