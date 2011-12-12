@@ -25,18 +25,26 @@ Instance of EventEmitter.</p>
 <span class="kd">function</span> <span class="nx">response</span><span class="p">(</span><span class="nx">statusCode</span><span class="p">,</span> <span class="nx">cb</span><span class="p">)</span> <span class="p">{</span>
   <span class="k">return</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">,</span> <span class="nx">response</span><span class="p">,</span> <span class="nx">body</span><span class="p">)</span> <span class="p">{</span>
     <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
-      <span class="k">throw</span> <span class="nx">err</span><span class="p">;</span>
+      <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;err&quot;</span><span class="p">,</span> <span class="nx">err</span><span class="p">);</span>
     <span class="p">}</span>
 
-    <span class="k">if</span> <span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">statusCode</span> <span class="o">!==</span> <span class="nx">statusCode</span><span class="p">)</span> <span class="p">{</span>
-      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="nx">body</span><span class="p">);</span>
-    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="k">switch</span> <span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">statusCode</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="nx">statusCode</span><span class="o">:</span>
       <span class="nx">cb</span><span class="p">(</span><span class="nx">body</span><span class="p">,</span> <span class="nx">response</span><span class="p">);</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="mi">201</span><span class="o">:</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="nx">body</span><span class="p">,</span> <span class="nx">response</span><span class="p">);</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="mi">404</span><span class="o">:</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;error:notfound&quot;</span><span class="p">,</span> <span class="nx">body</span><span class="p">,</span> <span class="nx">response</span><span class="p">);</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">default</span><span class="o">:</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;err&quot;</span><span class="p">,</span> <span class="nx">body</span><span class="p">,</span> <span class="nx">response</span><span class="p">);</span>
     <span class="p">}</span>
-  <span class="p">};</span>
+  <span class="p">}.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
 <span class="p">}</span>
 
-<span class="kd">function</span> <span class="nx">xhr</span><span class="p">(</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">cb</span><span class="p">)</span> <span class="p">{</span>
+<span class="kd">function</span> <span class="nx">xhr</span><span class="p">(</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">cb</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">username</span> <span class="o">||</span> <span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">token</span><span class="p">)</span> <span class="p">{</span>
       <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;error:credentials&quot;</span><span class="p">);</span>
@@ -45,7 +53,8 @@ Instance of EventEmitter.</p>
     <span class="nx">opts</span><span class="p">.</span><span class="nx">form</span> <span class="o">=</span> <span class="p">{</span>
       <span class="nx">login</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">username</span><span class="p">,</span>
       <span class="nx">token</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">token</span><span class="p">,</span>
-      <span class="s2">&quot;file_contents[gistfile1json]&quot;</span><span class="o">:</span> <span class="nx">data</span>
+      <span class="s2">&quot;file_contents[text]&quot;</span><span class="o">:</span> <span class="nx">data</span><span class="p">,</span>
+      <span class="s2">&quot;file_name[text]&quot;</span><span class="o">:</span> <span class="nx">name</span>
     <span class="p">};</span>
   <span class="p">}</span>
 
@@ -68,19 +77,20 @@ compatible with GitHub API v3</p>
 
   <span class="kd">var</span> <span class="nx">uri</span> <span class="o">=</span> <span class="s1">&#39;https://api.github.com/gists/&#39;</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">gist_id</span><span class="p">;</span>
   <span class="kd">var</span> <span class="nx">req</span> <span class="o">=</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">res</span> <span class="o">=</span> <span class="nx">response</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
 
-  <span class="nx">req</span><span class="p">({</span> <span class="nx">uri</span><span class="o">:</span> <span class="nx">uri</span> <span class="p">},</span> <span class="kc">null</span><span class="p">,</span> <span class="nx">response</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">body</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">req</span><span class="p">({</span> <span class="nx">uri</span><span class="o">:</span> <span class="nx">uri</span> <span class="p">},</span> <span class="kc">null</span><span class="p">,</span> <span class="nx">res</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">body</span><span class="p">)</span> <span class="p">{</span>
     <span class="k">this</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s1">&#39;get&#39;</span><span class="p">,</span> <span class="nx">body</span><span class="p">);</span>
   <span class="p">}.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">)));</span>
 <span class="p">};</span></pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <p>Convenience method which will create a new gist
 if <code>gist_id</code> is not provided. If it is provided,
 the gist will be updated.</p>
 
-<p>Parameter <strong>data</strong> is the data to create/edit to gist</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Gist</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">sync</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+<p>Parameter <strong>data</strong> is the data to create/edit to gist</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Gist</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">sync</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">gist_id</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">create</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">create</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">name</span><span class="p">);</span>
   <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">edit</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">edit</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">name</span><span class="p">);</span>
   <span class="p">}</span>
 <span class="p">};</span></pre></div>             </td>           </tr>                               <tr id="section-6">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-6">&#182;</a>               </div>               <p>Edits a gist</p>
 
@@ -89,7 +99,7 @@ the gist will be updated.</p>
 <p>If no <code>gist_id</code> is provided, event <strong>error:gist_id</strong> is emitted.</p>
 
 <p>On success, event <strong>updated</strong> is emitted with
-<code>body</code>, the response from GitHub.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Gist</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">edit</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+<code>body</code>, the response from GitHub.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Gist</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">edit</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">gist_id</span><span class="p">)</span> <span class="p">{</span>
     <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s1">&#39;error:gist_id&#39;</span><span class="p">);</span>
   <span class="p">}</span>
@@ -99,23 +109,25 @@ the gist will be updated.</p>
     <span class="nx">method</span><span class="o">:</span> <span class="s1">&#39;PUT&#39;</span>
   <span class="p">};</span>
   <span class="kd">var</span> <span class="nx">req</span> <span class="o">=</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">res</span> <span class="o">=</span> <span class="nx">response</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
 
-  <span class="nx">req</span><span class="p">(</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">response</span><span class="p">(</span><span class="mi">302</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">body</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">req</span><span class="p">(</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">res</span><span class="p">(</span><span class="mi">302</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">body</span><span class="p">)</span> <span class="p">{</span>
     <span class="k">this</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s1">&#39;updated&#39;</span><span class="p">,</span> <span class="nx">body</span><span class="p">);</span>
-  <span class="p">}.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">)));</span>
+  <span class="p">}.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">)),</span> <span class="nx">name</span><span class="p">);</span>
 <span class="p">};</span></pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <p>Creates a new gist</p>
 
 <p>Compatible with GitHub API v2. Success is status code 302.</p>
 
 <p>On success, event <strong>created</strong> is emitted with
-<code>body</code> as well as the new <code>gist_id</code>.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Gist</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">create</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+<code>body</code> as well as the new <code>gist_id</code>.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Gist</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">create</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
   <span class="kd">var</span> <span class="nx">opts</span> <span class="o">=</span> <span class="p">{</span>
     <span class="nx">uri</span><span class="o">:</span> <span class="s1">&#39;https://gist.github.com/gists&#39;</span><span class="p">,</span>
     <span class="nx">method</span><span class="o">:</span> <span class="s1">&#39;POST&#39;</span>
   <span class="p">};</span>
   <span class="kd">var</span> <span class="nx">req</span> <span class="o">=</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+  <span class="kd">var</span> <span class="nx">res</span> <span class="o">=</span> <span class="nx">response</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
 
-  <span class="nx">req</span><span class="p">(</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">response</span><span class="p">(</span><span class="mi">302</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">body</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">req</span><span class="p">(</span><span class="nx">opts</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">res</span><span class="p">(</span><span class="mi">302</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">body</span><span class="p">,</span> <span class="nx">res</span><span class="p">)</span> <span class="p">{</span>
     <span class="kd">var</span> <span class="nx">gist</span> <span class="o">=</span> <span class="sr">/(\d+)/</span><span class="p">;</span>
     <span class="kd">var</span> <span class="nx">location</span> <span class="o">=</span> <span class="nx">res</span><span class="p">.</span><span class="nx">headers</span><span class="p">.</span><span class="nx">location</span><span class="p">;</span>
     <span class="kd">var</span> <span class="nx">gist_id</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
@@ -125,7 +137,7 @@ the gist will be updated.</p>
     <span class="p">}</span>
 
     <span class="k">this</span><span class="p">.</span><span class="nx">emit</span><span class="p">(</span><span class="s1">&#39;created&#39;</span><span class="p">,</span> <span class="nx">body</span><span class="p">,</span> <span class="nx">gist_id</span><span class="p">);</span>
-  <span class="p">}.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">)));</span>
+  <span class="p">}.</span><span class="nx">bind</span><span class="p">(</span><span class="k">this</span><span class="p">)),</span> <span class="nx">name</span><span class="p">);</span>
 <span class="p">};</span>
 
 <span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="nx">Gist</span><span class="p">;</span>
