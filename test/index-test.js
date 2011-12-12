@@ -98,23 +98,6 @@ vows.describe("gister").addBatch({
       }
     },
 
-    "and the response statusCode is 204 no content": {
-      topic: function () {
-        var gist = new Gist({ gist_id: 1 });
-        gist.request = function (statusCode, cb) {
-          cb(null, { statusCode: 204 }, {});
-        };
-        gist.on('error:nocontent', function () {
-          this.callback();
-        }.bind(this));
-        gist.get();
-      },
-
-      "should emit nocontent event": function () {
-        // the test will pass if this event is emitted
-      }
-    },
-
     "and the response statusCode is 500 internal server error": {
       topic: function () {
         var gist = new Gist({ gist_id: 1 });

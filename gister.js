@@ -36,9 +36,6 @@ function response(statusCode, cb) {
     case 201:
       this.emit("created", body, response);
       break;
-    case 204:
-      this.emit("error:nocontent", body, response);
-      break;
     case 404:
       this.emit("error:notfound", body, response);
       break;
