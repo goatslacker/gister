@@ -91,7 +91,7 @@ Gist.prototype.sync = function (data, name) {
   if (!this.gist_id) {
     return this.create(data, name);
   } else {
-    return this.edit(data);
+    return this.edit(data, name);
   }
 };
 
@@ -103,7 +103,7 @@ Gist.prototype.sync = function (data, name) {
 //
 // On success, event **updated** is emitted with
 // `body`, the response from GitHub.
-Gist.prototype.edit = function (data) {
+Gist.prototype.edit = function (data, name) {
   if (!this.gist_id) {
     return this.emit('error:gist_id');
   }
@@ -116,7 +116,7 @@ Gist.prototype.edit = function (data) {
 
   req(opts, data, response(302, function (body) {
     this.emit('updated', body);
-  }.bind(this)));
+  }.bind(this)), name);
 };
 
 // Creates a new gist
