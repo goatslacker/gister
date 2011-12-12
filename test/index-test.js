@@ -53,31 +53,65 @@ vows.describe("gister").addBatch({
         gist.request = function (statusCode, cb) {
           cb(new Error(), { statusCode: 200 }, {});
         };
-        this.callback(null, gist);
+        gist.on('err', function () {
+          this.callback();
+        }.bind(this));
+        gist.get();
       },
 
-      "should raise an exception": function (gist) {
-        function err() {
-          gist.get();
-        }
-        assert.throws(err, Error);
+      "should call error event": function () {
+        // the test will pass if this event is emitted
       }
     },
 
-    "and the response statusCode is not 200 OK": {
+    "and the response statusCode is not found 404": {
       topic: function () {
         var gist = new Gist({ gist_id: 1 });
         gist.request = function (statusCode, cb) {
           cb(null, { statusCode: 404 }, {});
         };
-        this.callback(null, gist);
+        gist.on('error:notfound', function () {
+          this.callback();
+        }.bind(this));
+        gist.get();
       },
 
-      "should raise an exception": function (gist) {
-        function err() {
-          gist.get();
-        }
-        assert.throws(err, Error);
+      "should call notfound event": function () {
+        // the test will pass if this event is emitted
+      }
+    },
+
+    "and the response statusCode is 201": {
+      topic: function () {
+        var gist = newgist();
+        gist.request = function (statusCode, cb) {
+          cb(null, { statusCode: 201 }, {});
+        };
+        gist.on('created', function () {
+          this.callback();
+        }.bind(this));
+        gist.create();
+      },
+
+      "should emit created event": function () {
+        // the test will pass if this event is emitted
+      }
+    },
+
+    "and the response statusCode is 500 internal server error": {
+      topic: function () {
+        var gist = new Gist({ gist_id: 1 });
+        gist.request = function (statusCode, cb) {
+          cb(null, { statusCode: 500 }, {});
+        };
+        gist.on('err', function () {
+          this.callback();
+        }.bind(this));
+        gist.get();
+      },
+
+      "should emit err event": function () {
+        // the test will pass if this event is emitted
       }
     }
   },

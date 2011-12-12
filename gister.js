@@ -26,18 +26,26 @@ Gist.prototype = Object.create(EventEmitter.prototype);
 function response(statusCode, cb) {
   return function (err, response, body) {
     if (err) {
-      throw err;
+      return this.emit("err", err);
     }
 
-    if (response.statusCode !== statusCode) {
-      throw new Error(body);
-    } else {
+    switch (response.statusCode) {
+    case statusCode:
       cb(body, response);
+      break;
+    case 201:
+      this.emit("created", body, response);
+      break;
+    case 404:
+      this.emit("error:notfound", body, response);
+      break;
+    default:
+      this.emit("err", body, response);
     }
-  };
+  }.bind(this);
 }
 
-function xhr(opts, data, cb) {
+function xhr(opts, data, cb, name) {
   if (data) {
     if (!this.username || !this.token) {
       return this.emit("error:credentials");
@@ -46,7 +54,8 @@ function xhr(opts, data, cb) {
     opts.form = {
       login: this.username,
       token: this.token,
-      "file_contents[gistfile1json]": data
+      "file_contents[text]": data,
+      "file_name[text]": name
     };
   }
 
@@ -75,8 +84,9 @@ Gist.prototype.get = function () {
 
   var uri = 'https://api.github.com/gists/' + this.gist_id;
   var req = xhr.bind(this);
+  var res = response.bind(this);
 
-  req({ uri: uri }, null, response(200, function (body) {
+  req({ uri: uri }, null, res(200, function (body) {
     this.emit('get', body);
   }.bind(this)));
 };
@@ -86,11 +96,11 @@ Gist.prototype.get = function () {
 // the gist will be updated.
 //
 // Parameter __data__ is the data to create/edit to gist
-Gist.prototype.sync = function (data) {
+Gist.prototype.sync = function (data, name) {
   if (!this.gist_id) {
-    return this.create(data);
+    return this.create(data, name);
   } else {
-    return this.edit(data);
+    return this.edit(data, name);
   }
 };
 
@@ -102,7 +112,7 @@ Gist.prototype.sync = function (data) {
 //
 // On success, event **updated** is emitted with
 // `body`, the response from GitHub.
-Gist.prototype.edit = function (data) {
+Gist.prototype.edit = function (data, name) {
   if (!this.gist_id) {
     return this.emit('error:gist_id');
   }
@@ -112,10 +122,11 @@ Gist.prototype.edit = function (data) {
     method: 'PUT'
   };
   var req = xhr.bind(this);
+  var res = response.bind(this);
 
-  req(opts, data, response(302, function (body) {
+  req(opts, data, res(302, function (body) {
     this.emit('updated', body);
-  }.bind(this)));
+  }.bind(this)), name);
 };
 
 // Creates a new gist
@@ -124,14 +135,15 @@ Gist.prototype.edit = function (data) {
 //
 // On success, event **created** is emitted with
 // `body` as well as the new `gist_id`.
-Gist.prototype.create = function (data) {
+Gist.prototype.create = function (data, name) {
   var opts = {
     uri: 'https://gist.github.com/gists',
     method: 'POST'
   };
   var req = xhr.bind(this);
+  var res = response.bind(this);
 
-  req(opts, data, response(302, function (body, res) {
+  req(opts, data, res(302, function (body, res) {
     var gist = /(\d+)/;
     var location = res.headers.location;
     var gist_id = null;
@@ -141,7 +153,7 @@ Gist.prototype.create = function (data) {
     }
 
     this.emit('created', body, gist_id);
-  }.bind(this)));
+  }.bind(this)), name);
 };
 
 module.exports = Gist;
