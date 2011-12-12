@@ -26,15 +26,26 @@ Gist.prototype = Object.create(EventEmitter.prototype);
 function response(statusCode, cb) {
   return function (err, response, body) {
     if (err) {
-      throw err;
+      return this.emit("err", err);
     }
 
-    if (response.statusCode !== statusCode) {
-      throw new Error(body);
-    } else {
+    switch (response.statusCode) {
+    case statusCode:
       cb(body, response);
+      break;
+    case 201:
+      this.emit("created", body, response);
+      break;
+    case 204:
+      this.emit("error:nocontent", body, response);
+      break;
+    case 404:
+      this.emit("error:notfound", body, response);
+      break;
+    default:
+      this.emit("err", body, response);
     }
-  };
+  }.bind(this);
 }
 
 function xhr(opts, data, cb, name) {
@@ -76,8 +87,9 @@ Gist.prototype.get = function () {
 
   var uri = 'https://api.github.com/gists/' + this.gist_id;
   var req = xhr.bind(this);
+  var res = response.bind(this);
 
-  req({ uri: uri }, null, response(200, function (body) {
+  req({ uri: uri }, null, res(200, function (body) {
     this.emit('get', body);
   }.bind(this)));
 };
@@ -113,8 +125,9 @@ Gist.prototype.edit = function (data, name) {
     method: 'PUT'
   };
   var req = xhr.bind(this);
+  var res = response.bind(this);
 
-  req(opts, data, response(302, function (body) {
+  req(opts, data, res(302, function (body) {
     this.emit('updated', body);
   }.bind(this)), name);
 };
@@ -131,8 +144,9 @@ Gist.prototype.create = function (data, name) {
     method: 'POST'
   };
   var req = xhr.bind(this);
+  var res = response.bind(this);
 
-  req(opts, data, response(302, function (body, res) {
+  req(opts, data, res(302, function (body, res) {
     var gist = /(\d+)/;
     var location = res.headers.location;
     var gist_id = null;
