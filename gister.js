@@ -37,7 +37,7 @@ function response(statusCode, cb) {
   };
 }
 
-function xhr(opts, data, cb) {
+function xhr(opts, data, cb, name) {
   if (data) {
     if (!this.username || !this.token) {
       return this.emit("error:credentials");
@@ -46,7 +46,8 @@ function xhr(opts, data, cb) {
     opts.form = {
       login: this.username,
       token: this.token,
-      "file_contents[gistfile1json]": data
+      "file_contents[text]": data,
+      "file_name[text]": name
     };
   }
 
@@ -86,9 +87,9 @@ Gist.prototype.get = function () {
 // the gist will be updated.
 //
 // Parameter __data__ is the data to create/edit to gist
-Gist.prototype.sync = function (data) {
+Gist.prototype.sync = function (data, name) {
   if (!this.gist_id) {
-    return this.create(data);
+    return this.create(data, name);
   } else {
     return this.edit(data);
   }
@@ -124,7 +125,7 @@ Gist.prototype.edit = function (data) {
 //
 // On success, event **created** is emitted with
 // `body` as well as the new `gist_id`.
-Gist.prototype.create = function (data) {
+Gist.prototype.create = function (data, name) {
   var opts = {
     uri: 'https://gist.github.com/gists',
     method: 'POST'
@@ -141,7 +142,7 @@ Gist.prototype.create = function (data) {
     }
 
     this.emit('created', body, gist_id);
-  }.bind(this)));
+  }.bind(this)), name);
 };
 
 module.exports = Gist;
