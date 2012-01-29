@@ -4,9 +4,7 @@ var assert = require('assert');
 var response = require('./mock/response');
 var request = require('./mock/request');
 
-var Gist = require((process.argv[3]
-  && process.argv[3].indexOf("--cover") !== -1) ?
-  '../jscoverage/gister' : '../gister');
+var Gist = require('../gister');
 
 function newgist(id) {
   var gist = new Gist({

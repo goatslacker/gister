@@ -21,11 +21,12 @@
     "request": "2.2.x"
   },
   "devDependencies": {
-    "vows": "0.5.x"
+    "vows": "0.5.x",
+    "koala-t": "latest"
   },
   "main": "gister.js",
   "scripts": {
-    "test": "vows --spec"
+    "test": "koala-t"
   },
   "engines": {
     "node": ">= 0.4.0"
