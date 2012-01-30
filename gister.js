@@ -77,7 +77,7 @@ Gist.prototype.request = function (opts, cb) {
 //
 // On success, event **get** is emitted with `body` passed.
 // `body` is the response from GitHub.
-Gist.prototype.get = function () {
+Gist.prototype.get = function (name) {
   if (!this.gist_id) {
     return this.emit('error:gist_id');
   }
@@ -87,7 +87,13 @@ Gist.prototype.get = function () {
   var res = response.bind(this);
 
   req({ uri: uri }, null, res(200, function (body) {
-    this.emit('get', body);
+    var data;
+    if (name) {
+      data = JSON.parse(body);
+      this.emit('get', data.files[name]);
+    } else {
+      this.emit('get', body);
+    }
   }.bind(this)));
 };
 
