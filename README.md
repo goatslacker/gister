@@ -52,4 +52,6 @@ Each event takes a callback as it's second parameter.
     gist.gist_id = 101210;
     gist.get("name of my gist");        // name of your gist is optional. If added only that 'file' will be retrieved.
 
+### More?
+
 [Read annotated source](http://goatslacker.github.com/gister)
