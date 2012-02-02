@@ -29,7 +29,7 @@ Inside your project's directory
 
 gister will emit events back at you.
 
-Each event takes a callback as it's second parameter.
+Each event takes a callback as its second parameter.
 
     gist.on('error:credentials');       // Missing credentials
     gist.on('error:notfound');          // gist was not found
