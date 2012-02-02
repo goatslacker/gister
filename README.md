@@ -4,7 +4,7 @@
 
 node.js module for gist.github.com -- edit, create, and retrieve gists.
 
-# The Basics
+## The Basics
 
 `gister` is a way to create, edit and retrieve gists programatically.
 
