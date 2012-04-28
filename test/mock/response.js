@@ -84,7 +84,7 @@ exports.post = {
   ]
 };
 
-exports.put = {
+exports.patch = {
   "url": "https://api.github.com/gists/1",
   "id": "1",
   "description": "description of gist",

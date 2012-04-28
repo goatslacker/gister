@@ -1,5 +1,6 @@
-var request = require('request');
-var EventEmitter = require('events').EventEmitter;
+/*jshint asi: true */
+var request = require('request')
+var EventEmitter = require('events').EventEmitter
 
 // ## Gist
 //
@@ -12,61 +13,77 @@ var EventEmitter = require('events').EventEmitter;
 // * __token__ Your secret API token, can be found in [Account Settings](https://github.com/account/admin)
 // * __gist_id__ (optional) The Gist ID
 function Gist(o) {
-  EventEmitter.call(this);
+  EventEmitter.call(this)
 
-  o = o || {};
+  o = o || {}
 
-  this.username = o.username;
-  this.token = o.token;
-  this.gist_id = o.gist_id;
+  this.username = o.username
+  this.password = o.password
+  this.token = o.token
+  this.gist_id = o.gist_id
 }
 
-Gist.prototype = Object.create(EventEmitter.prototype);
+Gist.prototype = Object.create(EventEmitter.prototype)
 
-function response(statusCode, cb) {
+function response(self, statuses) {
   return function (err, response, body) {
     if (err) {
-      return this.emit("err", err);
+      return self.emit("err", err)
+    }
+
+    var cb = statuses[response.statusCode]
+    if (cb) {
+      return cb(body, response)
     }
 
     switch (response.statusCode) {
-    case statusCode:
-      cb(body, response);
-      break;
     case 201:
-      this.emit("created", body, response);
-      break;
+      self.emit("created", body, response)
+      break
     case 404:
-      this.emit("error:notfound", body, response);
-      break;
+      self.emit("error:notfound", body, response)
+      break
     default:
-      this.emit("err", body, response);
+      self.emit("err", body, response)
     }
-  }.bind(this);
+  }
 }
 
 function xhr(opts, data, cb, name) {
   if (data) {
-    if (!this.username || !this.token) {
-      return this.emit("error:credentials");
+    if (this.token) {
+      opts.headers = { 'Authorization': 'token ' + this.token }
+    } else if (this.username && this.password) {
+      opts.headers = { 'Authorization': 'Basic ' + new Buffer(this.username + ':' + this.password).toString('base64') }
+    } else {
+      return this.emit("error:credentials")
     }
 
-    opts.form = {
-      login: this.username,
-      token: this.token,
-      "file_contents[text]": data,
-      "file_name[text]": name
-    };
+    opts.json = {
+      description: '',
+      files: {},
+      public: true
+    }
+
+    opts.json.files[name] = { content: data }
+
+//    Object.keys(data).forEach(function (name) {
+//      opts.json.files[name] = { content: data[name] }
+//    })
   }
 
-  return this.request(opts, cb);
+  return this.request(opts, cb)
 }
 
 // Uses request to talk to GitHub API.
 // Provided in the prototype so request can be mocked for tests.
 Gist.prototype.request = function (opts, cb) {
-  return request(opts, cb);
-};
+  return request(opts, cb)
+}
+
+Gist.prototype.auth = function () {
+  // FIXME
+}
 
 // Retrieves a gist from gist.github.com
 //
@@ -78,24 +95,30 @@ Gist.prototype.request = function (opts, cb) {
 // On success, event **get** is emitted with `body` passed.
 // `body` is the response from GitHub.
 Gist.prototype.get = function (name) {
+  var gist = this
+
   if (!this.gist_id) {
-    return this.emit('error:gist_id');
+    return this.emit('error:gist_id')
   }
 
-  var uri = 'https://api.github.com/gists/' + this.gist_id;
-  var req = xhr.bind(this);
-  var res = response.bind(this);
+  var opts = {
+    uri: 'https://api.github.com/gists/' + this.gist_id
+  }
 
-  req({ uri: uri }, null, res(200, function (body) {
-    var data;
-    if (name) {
-      data = JSON.parse(body);
-      this.emit('get', data.files[name]);
-    } else {
-      this.emit('get', body);
+  var res = response(this, {
+    200: function (body) {
+      if (name) {
+        var data = JSON.parse(body)
+        return gist.emit('get', data.files[name])
+      }
+
+      return gist.emit('get', body)
     }
-  }.bind(this)));
-};
+  })
+
+  return xhr.bind(this)(opts, null, res, name)
+}
+
 
 // Convenience method which will create a new gist
 // if `gist_id` is not provided. If it is provided,
@@ -104,11 +127,11 @@ Gist.prototype.get = function (name) {
 // Parameter __data__ is the data to create/edit to gist
 Gist.prototype.sync = function (data, name) {
   if (!this.gist_id) {
-    return this.create(data, name);
-  } else {
-    return this.edit(data, name);
+    return this.create(data, name)
   }
-};
+
+  return this.edit(data, name)
+}
 
 // Edits a gist
 //
@@ -120,20 +143,19 @@ Gist.prototype.sync = function (data, name) {
 // `body`, the response from GitHub.
 Gist.prototype.edit = function (data, name) {
   if (!this.gist_id) {
-    return this.emit('error:gist_id');
+    return this.emit('error:gist_id')
   }
 
   var opts = {
     uri: 'https://gist.github.com/gists/' + this.gist_id,
-    method: 'PUT'
-  };
-  var req = xhr.bind(this);
-  var res = response.bind(this);
+    method: 'PATCH'
+  }
+  var req = xhr.bind(this)
 
-  req(opts, data, res(302, function (body) {
-    this.emit('updated', body);
-  }.bind(this)), name);
-};
+  req(opts, data, response(this, { 302: function (body) {
+    this.emit('updated', body)
+  }.bind(this) }), name)
+}
 
 // Creates a new gist
 //
@@ -145,21 +167,20 @@ Gist.prototype.create = function (data, name) {
   var opts = {
     uri: 'https://gist.github.com/gists',
     method: 'POST'
-  };
-  var req = xhr.bind(this);
-  var res = response.bind(this);
+  }
+  var req = xhr.bind(this)
 
-  req(opts, data, res(302, function (body, res) {
-    var gist = /(\d+)/;
-    var location = res.headers.location;
-    var gist_id = null;
+  req(opts, data, response(this, { 302: function (body, res) {
+    var gist = /(\d+)/
+    var location = res.headers.location
+    var gist_id = null
 
     if (gist.test(location)) {
-      gist_id = gist.exec(location)[0];
+      gist_id = gist.exec(location)[0]
     }
 
-    this.emit('created', body, gist_id);
-  }.bind(this)), name);
-};
+    this.emit('created', body, gist_id)
+  }.bind(this) }), name)
+}
 
-module.exports = Gist;
+module.exports = Gist

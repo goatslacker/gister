@@ -126,7 +126,7 @@ vows.describe("gister").addBatch({
       },
 
       "should edit existing gist": function (topic) {
-        assert.deepEqual(topic, response.put);
+        assert.deepEqual(topic, response.patch);
       }
     },
 
@@ -146,7 +146,7 @@ vows.describe("gister").addBatch({
 
   "when editing a gist": {
 
-    "and providing token, username and gist id": {
+    "and providing token and gist id": {
       topic: function () {
         var gist = newgist(1);
         gist.on('updated', function (body) {
@@ -156,7 +156,7 @@ vows.describe("gister").addBatch({
       },
 
       "should receive a response": function (topic) {
-        assert.deepEqual(topic, response.put);
+        assert.deepEqual(topic, response.patch);
       }
     },
 
@@ -172,7 +172,7 @@ vows.describe("gister").addBatch({
       }
     },
 
-    "without providing a token": {
+    "and providing a username but no password": {
       topic: function () {
         var gist = new Gist({ username: "octocat", gist_id: 1 });
         gist.request = request;
@@ -185,9 +185,9 @@ vows.describe("gister").addBatch({
       }
     },
 
-    "without providing a username": {
+    "without providing a username, just a password": {
       topic: function () {
-        var gist = new Gist({ token: "abc123", gist_id: 1 });
+        var gist = new Gist({ password: "secret", gist_id: 1 });
         gist.request = request;
         gist.on('error:credentials', this.callback);
         gist.edit("contents of gist");
@@ -215,7 +215,7 @@ vows.describe("gister").addBatch({
       }
     },
 
-    "without providing a token": {
+    "without providing a password": {
       topic: function () {
         var gist = new Gist({ username: "octocat" });
         gist.request = request;
@@ -228,16 +228,18 @@ vows.describe("gister").addBatch({
       }
     },
 
-    "without providing a username": {
+    "providing just then token": {
       topic: function () {
         var gist = new Gist({ token: "abc123" });
         gist.request = request;
-        gist.on('error:credentials', this.callback);
+        gist.on('created', function (body) {
+          this.callback(null, body);
+        }.bind(this));
         gist.create("contents of gist");
       },
 
-      "should receive an error": function () {
-        // the test will pass if this event is emitted
+      "should receive a response": function (topic) {
+        assert.deepEqual(topic, response.post);
       }
     }
   }
