@@ -2,6 +2,10 @@
 var request = require('request')
 var EventEmitter = require('events').EventEmitter
 
+// Rate limiting
+var time = null
+var rate = 1
+
 // ## Gist
 //
 // Constructs a new Gist object.
@@ -28,7 +32,12 @@ Gist.prototype = Object.create(EventEmitter.prototype)
 function response(self, statuses) {
   return function (err, response, body) {
     if (err) {
-      return self.emit("err", err)
+      return self.emit('err', err)
+    }
+
+    var limit = response.headers['x-ratelimit-remaining']
+    if (limit) {
+      rate = limit
     }
 
     var cb = statuses[response.statusCode]
@@ -38,25 +47,37 @@ function response(self, statuses) {
 
     switch (response.statusCode) {
     case 201:
-      self.emit("created", body, response)
+      self.emit('created', body, response)
       break
     case 404:
-      self.emit("error:notfound", body, response)
+      self.emit('error:notfound', body, response)
       break
     default:
-      self.emit("err", body, response)
+      self.emit('err', body, response)
     }
   }
 }
 
 function xhr(opts, data, cb, name) {
+  // if we're over the limit
+  if (rate <= 0) {
+    // if it's been over an hour, reset the rate
+    // and reset the timer
+    if (Date.now() > time + 360000) {
+      time = null
+      rate = 1
+    } else {
+      return this.emit('error:ratelimit')
+    }
+  }
+
   if (data) {
     if (this.token) {
       opts.headers = { 'Authorization': 'token ' + this.token }
     } else if (this.username && this.password) {
       opts.headers = { 'Authorization': 'Basic ' + new Buffer(this.username + ':' + this.password).toString('base64') }
     } else {
-      return this.emit("error:credentials")
+      return this.emit('error:credentials')
     }
 
     opts.json = {
@@ -78,11 +99,33 @@ function xhr(opts, data, cb, name) {
 // Uses request to talk to GitHub API.
 // Provided in the prototype so request can be mocked for tests.
 Gist.prototype.request = function (opts, cb) {
+  time = time || Date.now()
   return request(opts, cb)
 }
 
-Gist.prototype.auth = function () {
-  // FIXME
+Gist.prototype.auth = function (appName) {
+  if (!appName) {
+    throw new ReferenceError('Application Name is missing')
+  }
+
+  this.token = null
+
+  if (!this.username || !this.password) {
+    return this.emit('error:credentials')
+  }
+
+  var opts = { method: 'POST', uri: 'https://api.github.com/authorizations' }
+  opts.headers = { 'Authorization': 'Basic ' + new Buffer(this.username + ':' + this.password).toString('base64') }
+  opts.json = { scopes: ['gist'], note: appName }
+
+  var res = response(this, {
+    201: function (body) {
+      this.token = body.token
+      this.emit('token', this.token)
+    }.bind(this)
+  })
+
+  return xhr.bind(this)(opts, null, res)
 }
 
 // Retrieves a gist from gist.github.com
