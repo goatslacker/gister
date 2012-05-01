@@ -67,7 +67,7 @@ function xhr(opts, data, cb, name) {
       time = null
       rate = 1
     } else {
-      return this.emit('error:ratelimit')
+      return this.emit('error:ratelimit', 'Over rate limit: http://developer.github.com/v3/#rate-limiting')
     }
   }
 
@@ -77,7 +77,7 @@ function xhr(opts, data, cb, name) {
     } else if (this.username && this.password) {
       opts.headers = { 'Authorization': 'Basic ' + new Buffer(this.username + ':' + this.password).toString('base64') }
     } else {
-      return this.emit('error:credentials')
+      return this.emit('error:credentials', 'No OAuth token or username and password provided')
     }
 
     opts.json = {
@@ -111,7 +111,7 @@ Gist.prototype.auth = function (appName) {
   this.token = null
 
   if (!this.username || !this.password) {
-    return this.emit('error:credentials')
+    return this.emit('error:credentials', 'No OAuth token or username and password provided')
   }
 
   var opts = { method: 'POST', uri: 'https://api.github.com/authorizations' }
@@ -141,7 +141,7 @@ Gist.prototype.get = function (name) {
   var gist = this
 
   if (!this.gist_id) {
-    return this.emit('error:gist_id')
+    return this.emit('error:gist_id', 'No gist id provided')
   }
 
   var opts = {
@@ -186,16 +186,16 @@ Gist.prototype.sync = function (data, name) {
 // `body`, the response from GitHub.
 Gist.prototype.edit = function (data, name) {
   if (!this.gist_id) {
-    return this.emit('error:gist_id')
+    return this.emit('error:gist_id', 'No gist id provided')
   }
 
   var opts = {
-    uri: 'https://gist.github.com/gists/' + this.gist_id,
+    uri: 'https://api.github.com/gists/' + this.gist_id,
     method: 'PATCH'
   }
   var req = xhr.bind(this)
 
-  req(opts, data, response(this, { 302: function (body) {
+  req(opts, data, response(this, { 200: function (body) {
     this.emit('updated', body)
   }.bind(this) }), name)
 }
@@ -208,12 +208,12 @@ Gist.prototype.edit = function (data, name) {
 // `body` as well as the new `gist_id`.
 Gist.prototype.create = function (data, name) {
   var opts = {
-    uri: 'https://gist.github.com/gists',
+    uri: 'https://api.github.com/gists',
     method: 'POST'
   }
   var req = xhr.bind(this)
 
-  req(opts, data, response(this, { 302: function (body, res) {
+  req(opts, data, response(this, { 201: function (body, res) {
     var gist = /(\d+)/
     var location = res.headers.location
     var gist_id = null
