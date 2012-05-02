@@ -26,35 +26,53 @@ api.all = function (id) {
   } else {
     opts = api('gists', 'GET')
   }
-  return { req: opts, statusCode: 200 }
+  return opts
+}
+
+api.star = function (id) {
+  var opts = api('gists', 'PUT')
+  opts.uri += '/' + id + '/star'
+  return opts // 204
+}
+
+api.unstar = function (id) {
+  var opts = api('gists', 'DELETE')
+  opts.uri += '/' + id + '/star'
+  return opts // 204
+}
+
+api.is_star = function (id) {
+  var opts = api('gists', 'GET')
+  opts.uri += '/' + id + '/star'
+  return opts // 204
 }
 
 api.get = function (id) {
   var opts = api('gists', 'GET')
   opts.uri += '/' + id
-  return { req: opts, statusCode: 200 }
+  return opts
 }
 
 api.create = function (data) {
   var opts = api('gists', 'POST')
   opts.json = add_data(data)
-  return { req: opts, statusCode: 201 }
+  return opts
 }
 
 api.patch = function (data, id) {
   var opts = api('gists', 'PATCH')
   opts.uri += '/' + id
   opts.json = add_data(data)
-  return { req: opts, statusCode: 200 }
+  return opts
 }
 
 api.auth = function (appName) {
   var opts = api('authorizations', 'POST')
   opts.json = { scopes: ['gist'], note: appName }
-  return { req: opts, statusCode: 201 }
+  return opts
 }
 
-function response(statusCode, cb) {
+function response(callbacks) {
   var gist = this
 
   return function (err, res, body) {
@@ -66,7 +84,8 @@ function response(statusCode, cb) {
     limit && (rate = limit)
 
     // if we have a callback attached, call it
-    if (res.statusCode === statusCode) return cb(body, res)
+    var cb = callbacks[res.statusCode]
+    if (cb) return cb(body, res)
 
     // otherwise it's an error
     return gist.emit('error', new Error(body.message), body, res)
@@ -118,16 +137,13 @@ function authenticate(opts) {
   return opts
 }
 
-function xhr(def, cb) {
+function xhr(opts, callbacks) {
   // set the time if it isn't set
   time = time || Date.now()
 
-  var opts = def.req
-  var statusCode = def.statusCode
-
   opts = authenticate.call(this, opts)
 
-  return this.request(opts, response.call(this, statusCode, cb))
+  return this.request(opts, response.call(this, callbacks))
 }
 
 
@@ -162,20 +178,24 @@ Gist.prototype.request = function (opts, cb) {
 Gist.prototype.get = function (gist_id, name) {
   gist_id = check_gist_id.call(this, gist_id)
 
-  return xhr.call(this, api.get(gist_id), function (body) {
-    if (name) {
-      var data = JSON.parse(body)
-      return this.emit('gist', data.files[name])
-    }
+  return xhr.call(this, api.get(gist_id), {
+    200: function (body) {
+      if (name) {
+        var data = JSON.parse(body)
+        return this.emit('gist', data.files[name])
+      }
 
-    return this.emit('gist', body)
-  }.bind(this))
+      return this.emit('gist', body)
+    }.bind(this)
+  })
 }
 
 Gist.prototype.getAll = function (user_id) {
-  return xhr.call(this, api.all(user_id), function (body) {
-    this.emit('gists', body)
-  }.bind(this))
+  return xhr.call(this, api.all(user_id), {
+    200: function (body) {
+      this.emit('gists', body)
+    }.bind(this)
+  })
 }
 
 Gist.prototype.auth = function (appName) {
@@ -183,10 +203,12 @@ Gist.prototype.auth = function (appName) {
 
   this.token = null
 
-  return xhr.call(this, api.auth(appName), function (body) {
-    this.token = body.token
-    this.emit('token', this.token)
-  }.bind(this))
+  return xhr.call(this, api.auth(appName), {
+    201: function (body) {
+      this.token = body.token
+      this.emit('token', this.token)
+    }.bind(this)
+  })
 }
 
 // Convenience method which will create a new gist
@@ -214,9 +236,11 @@ Gist.prototype.edit = function (data, gist_id) {
   gist_id = check_gist_id.call(this, gist_id)
   check_data(data)
 
-  return xhr.call(this, api.patch(data, gist_id), function (body) {
-    this.emit('edited', body)
-  }.bind(this))
+  return xhr.call(this, api.patch(data, gist_id), {
+    200: function (body) {
+      this.emit('edited', body)
+    }.bind(this)
+  })
 }
 
 // Creates a new gist
@@ -228,17 +252,19 @@ Gist.prototype.edit = function (data, gist_id) {
 Gist.prototype.create = function (data) {
   check_data(data)
 
-  return xhr.call(this, api.create(data), function (body, res) {
-    var gist = /(\d+)/
-    var location = res.headers.location
-    var gist_id = null
+  return xhr.call(this, api.create(data), {
+    201: function (body, res) {
+      var gist = /(\d+)/
+      var location = res.headers.location
+      var gist_id = null
 
-    if (gist.test(location)) {
-      gist_id = gist.exec(location)[0]
-    }
+      if (gist.test(location)) {
+        gist_id = gist.exec(location)[0]
+      }
 
-    this.emit('created', body, gist_id)
-  }.bind(this))
+      this.emit('created', body, gist_id)
+    }.bind(this)
+  })
 }
 
 
