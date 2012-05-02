@@ -32,19 +32,19 @@ api.all = function (id) {
 api.star = function (id) {
   var opts = api('gists', 'PUT')
   opts.uri += '/' + id + '/star'
-  return opts // 204
+  return opts
 }
 
 api.unstar = function (id) {
   var opts = api('gists', 'DELETE')
   opts.uri += '/' + id + '/star'
-  return opts // 204
+  return opts
 }
 
-api.is_star = function (id) {
+api.starred = function (id) {
   var opts = api('gists', 'GET')
   opts.uri += '/' + id + '/star'
-  return opts // 204
+  return opts
 }
 
 api.get = function (id) {
@@ -182,7 +182,7 @@ Gist.prototype.get = function (gist_id, name) {
     200: function (body) {
       if (name) {
         var data = JSON.parse(body)
-        return this.emit('gist', data.files[name])
+        return this.emit('get', data.files[name])
       }
 
       return this.emit('gist', body)
@@ -207,6 +207,36 @@ Gist.prototype.auth = function (appName) {
     201: function (body) {
       this.token = body.token
       this.emit('token', this.token)
+    }.bind(this)
+  })
+}
+
+Gist.prototype.star = function (gist_id) {
+  gist_id = check_gist_id.call(this, gist_id)
+  return xhr.call(this, api.star(gist_id), {
+    204: function (body) {
+      this.emit('starred', body)
+    }.bind(this)
+  })
+}
+
+Gist.prototype.unstar = function (gist_id) {
+  gist_id = check_gist_id.call(this, gist_id)
+  return xhr.call(this, api.unstar(gist_id), {
+    204: function (body) {
+      this.emit('unstarred', body)
+    }.bind(this)
+  })
+}
+
+Gist.prototype.isStarred = function (gist_id) {
+  gist_id = check_gist_id.call(this, gist_id)
+  return xhr.call(this, api.starred(gist_id), {
+    204: function () {
+      this.emit('is_starred', true)
+    }.bind(this),
+    404: function () {
+      this.emit('is_starred', false)
     }.bind(this)
   })
 }
