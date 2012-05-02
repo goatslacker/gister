@@ -220,8 +220,8 @@ Gist.prototype.auth = function (appName) {
 Gist.prototype.star = function (gist_id) {
   gist_id = check_gist_id.call(this, gist_id)
   return xhr.call(this, api.star(gist_id), {
-    204: function (body) {
-      this.emit('starred', body)
+    204: function () {
+      this.emit('starred', true)
     }.bind(this)
   })
 }
@@ -229,8 +229,8 @@ Gist.prototype.star = function (gist_id) {
 Gist.prototype.unstar = function (gist_id) {
   gist_id = check_gist_id.call(this, gist_id)
   return xhr.call(this, api.unstar(gist_id), {
-    204: function (body) {
-      this.emit('unstarred', body)
+    204: function () {
+      this.emit('unstarred', true)
     }.bind(this)
   })
 }
@@ -250,8 +250,8 @@ Gist.prototype.isStarred = function (gist_id) {
 Gist.prototype.del = function (gist_id) {
   gist_id = check_gist_id.call(this, gist_id)
   return xhr.call(this, api.del(gist_id), {
-    204: function (body) {
-      this.emit('delete', body)
+    204: function () {
+      this.emit('deleted', true)
     }.bind(this)
   })
 }
