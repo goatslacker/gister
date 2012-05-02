@@ -78,6 +78,12 @@ api.auth = function (appName) {
   return opts
 }
 
+api.fork = function (id) {
+  var opts = api('gists', 'POST')
+  opts.uri += '/' + id + '/fork'
+  return opts
+}
+
 function response(callbacks) {
   var gist = this
 
@@ -252,6 +258,16 @@ Gist.prototype.del = function (gist_id) {
   return xhr.call(this, api.del(gist_id), {
     204: function () {
       this.emit('deleted', true)
+    }.bind(this)
+  })
+}
+
+Gist.prototype.fork = function (gist_id) {
+  gist_id = check_gist_id.call(this, gist_id)
+
+  return xhr.call(this, api.fork(gist_id), {
+    201: function (body) {
+      this.emit('forked', body)
     }.bind(this)
   })
 }
