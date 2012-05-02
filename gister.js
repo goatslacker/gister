@@ -53,6 +53,12 @@ api.get = function (id) {
   return opts
 }
 
+api.del = function (id) {
+  var opts = api('gists', 'DELETE')
+  opts.uri += '/' + id
+  return opts
+}
+
 api.create = function (data) {
   var opts = api('gists', 'POST')
   opts.json = add_data(data)
@@ -237,6 +243,15 @@ Gist.prototype.isStarred = function (gist_id) {
     }.bind(this),
     404: function () {
       this.emit('is_starred', false)
+    }.bind(this)
+  })
+}
+
+Gist.prototype.del = function (gist_id) {
+  gist_id = check_gist_id.call(this, gist_id)
+  return xhr.call(this, api.del(gist_id), {
+    204: function (body) {
+      this.emit('delete', body)
     }.bind(this)
   })
 }
