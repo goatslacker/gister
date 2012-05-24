@@ -167,7 +167,8 @@ function xhr(opts, callbacks) {
 // **o** is an Object which contains
 //
 // * __username__ GitHub username
-// * __token__ Your secret API token, can be found in [Account Settings](https://github.com/account/admin)
+// * __password__ GitHub password
+// * __token__ The oAuth token that can be used for future requests instead of basic auth
 // * __gist_id__ (optional) The Gist ID
 function Gist(o) {
   EventEmitter.call(this)
@@ -285,14 +286,6 @@ Gist.prototype.sync = function (data, gist_id) {
   return this.edit(data, gist_id)
 }
 
-// Edits a gist
-//
-// Compatible with GitHub API v2. Success is status code 302.
-//
-// If no `gist_id` is provided, event **error:gist_id** is emitted.
-//
-// On success, event **updated** is emitted with
-// `body`, the response from GitHub.
 Gist.prototype.edit = function (data, gist_id) {
   gist_id = check_gist_id.call(this, gist_id)
   check_data(data)
@@ -304,12 +297,6 @@ Gist.prototype.edit = function (data, gist_id) {
   })
 }
 
-// Creates a new gist
-//
-// Compatible with GitHub API v2. Success is status code 302.
-//
-// On success, event **created** is emitted with
-// `body` as well as the new `gist_id`.
 Gist.prototype.create = function (data) {
   check_data(data)
 
