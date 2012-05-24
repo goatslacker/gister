@@ -61,66 +61,42 @@ vows.describe('gister').addBatch({
     },
 
     'and an error is returned from request': {
-      // FIXME
       topic: function () {
         var gist = new Gist({ gist_id: 1 })
         gist.request = function (statusCode, cb) {
-          cb(new Error(), { statusCode: 200, headers: {} }, {})
+          cb(new Error('Mock error'), { statusCode: 200, headers: {} }, {})
         }
         gist.on('error', wrap(this.callback))
         gist.get()
       },
 
-      'should call error event': function (err) {
-        assert.isTrue(err instanceof Error)
-      }
+      'should call error event': error('Mock error')
     },
 
     'and the response statusCode is not found 404': {
-      // FIXME
       topic: function () {
         var gist = new Gist({ gist_id: 1 })
         gist.request = function (statusCode, cb) {
-          cb(null, { statusCode: 404, headers: {} }, {})
+          cb(null, { statusCode: 404, headers: {} }, { message: 'Not found' })
         }
         gist.on('error', wrap(this.callback))
         gist.get()
       },
 
-      'should call notfound event': function (err) {
-        assert.isTrue(Boolean(err))
-      }
-    },
-
-    'and the response statusCode is 201': {
-      topic: function () {
-        var gist = clone_gist()
-        gist.request = function (statusCode, cb) {
-          cb(null, { statusCode: 201, headers: {} }, {})
-        }
-        gist.on('created', wrap(this.callback))
-        gist.create()
-      },
-
-      'should emit created event': function (err, body) {
-        assert.isTrue(Boolean(body))
-      }
+      'should call notfound event': error('Not found')
     },
 
     'and the response statusCode is 500 internal server error': {
       topic: function () {
-        // FIXME
         var gist = new Gist({ gist_id: 1 })
         gist.request = function (statusCode, cb) {
-          cb(null, { statusCode: 500, headers: {} }, {})
+          cb(null, { statusCode: 500, headers: {} }, { message: 'Internal Server Error' })
         }
         gist.on('err', wrap(this.callback))
         gist.get()
       },
 
-      'should emit err event': function (err) {
-        assert.isTrue(Boolean(err))
-      }
+      'should emit err event': error('Internal Server Error')
     }
   },
 
