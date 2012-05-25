@@ -22,8 +22,11 @@ Inside your project's directory
 
     var gist = new Gister({
       username: "octocat",
-      token: "secret"
+      password: "secret"
     });
+
+    // You can call .auth() method to retrieve an OAuth token and store that instead of
+    // the user's name and password
 
 ### Events
 
@@ -31,27 +34,25 @@ gister will emit events back at you.
 
 Each event takes a callback as its second parameter.
 
-    gist.on('error:credentials');       // Missing credentials
-    gist.on('error:notfound');          // gist was not found
-    gist.on('err');                     // General purpose errors
-    gist.on('error:gist_id');           // You did not provide a gist_id
-    gist.on('get');                     // The data from the gist you retrieved
-    gist.on('updated');                 // The response from GitHub when a gist is updated
-    gist.on('created');                 // Response after a gist has been created
+    error       // Errors received from response
+    gist        // The gist you're retrieving via .get()
+    edited      // GH Response for edited gists
+    created     // Response for created gists
+    token       // OAuth token returned
+    starred     // GH Response for starred gists
+    unstarred   // Response when unstarring a gist
+    is_starred  // Boolean. Checks if a gist is starred or not
+    deleted     // Response for deleted gists
+    forked      // Response for forked gists
 
 ### Creating a gist
 
-    gist.create("Hello World", "name of my gist");
+    gist.create({ "my_file.txt": "Hello World" });
 
 ### Editing a gist
 
-    gist.edit("New Content", "name of my gist");
+    gist.edit({ "flip.js": "function flip(f, a, b) { return f(b, a) }");
 
 ### Retrieiving a gist
 
-    gist.gist_id = 101210;
-    gist.get("name of my gist");        // name of your gist is optional. If added only that 'file' will be retrieved.
-
-### More?
-
-[Read annotated source](http://goatslacker.github.com/gister)
+    gist.get(101210, "name of my gist");    // name of your gist is optional. If added only that 'file' will be retrieved.

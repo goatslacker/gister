@@ -195,7 +195,7 @@ Gist.prototype.get = function (gist_id, name) {
     200: function (body) {
       if (name) {
         var data = JSON.parse(body)
-        return this.emit('get', data.files[name])
+        return this.emit('gist', data.files[name])
       }
 
       return this.emit('gist', body)
