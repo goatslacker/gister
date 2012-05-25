@@ -43,8 +43,11 @@ vows.describe('gister').addBatch({
       topic: function () {
         var gist = clone_gist()
         gist.gist_id = null
-        gist.on('error', wrap(this.callback))
-        gist.get()
+        try {
+          gist.get()
+        } catch (e) {
+          this.callback(null, e)
+        }
       },
 
       'should receive an error': error('No gist id provided')
@@ -92,11 +95,11 @@ vows.describe('gister').addBatch({
         gist.request = function (statusCode, cb) {
           cb(null, { statusCode: 500, headers: {} }, { message: 'Internal Server Error' })
         }
-        gist.on('err', wrap(this.callback))
+        gist.on('error', wrap(this.callback))
         gist.get()
       },
 
-      'should emit err event': error('Internal Server Error')
+      'should emit error event': error('Internal Server Error')
     }
   },
 
@@ -143,8 +146,11 @@ vows.describe('gister').addBatch({
       topic: function () {
         var gist = clone_gist()
         gist.gist_id = null
-        gist.on('error', wrap(this.callback))
-        gist.edit()
+        try {
+          gist.edit()
+        } catch (e) {
+          this.callback(null, e)
+        }
       },
 
       'should receive an error': error('No gist id provided')
@@ -153,8 +159,11 @@ vows.describe('gister').addBatch({
     'and providing a username but no password': {
       topic: function () {
         var gist = clone_gist({ username: 'octocat', gist_id: 1 })
-        gist.on('error:credentials', wrap(this.callback))
-        gist.edit(sample_gist)
+        try {
+          gist.edit(sample_gist)
+        } catch (e) {
+          this.callback(null, e);
+        }
       },
 
       'should receive an error': error('No OAuth token or username and password provided')
@@ -163,9 +172,11 @@ vows.describe('gister').addBatch({
     'without providing a username, just a password': {
       topic: function () {
         var gist = clone_gist({ password: 'secret', gist_id: 1 })
-        gist.request = request
-        gist.on('error:credentials', wrap(this.callback))
-        gist.edit(sample_gist)
+        try {
+          gist.edit(sample_gist)
+        } catch (e) {
+          this.callback(null, e);
+        }
       },
 
       'should receive an error': error('No OAuth token or username and password provided')
@@ -187,9 +198,11 @@ vows.describe('gister').addBatch({
     'without providing a password': {
       topic: function () {
         var gist = clone_gist({ username: 'octocat' })
-        gist.request = request
-        gist.on('error:credentials', wrap(this.callback))
-        gist.create(sample_gist)
+        try {
+          gist.create(sample_gist)
+        } catch (e) {
+          this.callback(null, e);
+        }
       },
 
       'should receive an error': error('No OAuth token or username and password provided')
