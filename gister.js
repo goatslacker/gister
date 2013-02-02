@@ -153,7 +153,9 @@ function xhr(opts, callbacks) {
   // set the time if it isn't set
   time = time || Date.now()
 
-  opts = authenticate.call(this, opts)
+  if (!this.isAnonymous){
+      opts = authenticate.call(this, opts)
+  }
 
   return this.request(opts, response.call(this, callbacks))
 }
@@ -179,6 +181,7 @@ function Gist(o) {
   this.password = o.password
   this.token = o.token
   this.gist_id = o.gist_id
+  this.isAnonymous = o.isAnonymous
 }
 
 Gist.prototype = Object.create(EventEmitter.prototype)
