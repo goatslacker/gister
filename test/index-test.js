@@ -217,6 +217,17 @@ vows.describe('gister').addBatch({
       },
 
       'should receive a response': ok(response.post)
+    },
+    'anonymous create a gist': {
+      topic: function () {
+        var gist = clone_gist({ isAnonymous: 1 })
+        gist.request = request
+        gist.on('created', wrap(this.callback))
+        gist.create(sample_gist)
+      },
+
+      'should receive a response': ok(response.post)
     }
+
   }
 }).export(module)
