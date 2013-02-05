@@ -153,7 +153,7 @@ function xhr(opts, callbacks) {
   // set the time if it isn't set
   time = time || Date.now()
 
-  if (!this.isAnonymous){
+  if (!this.isAnonymous) {
       opts = authenticate.call(this, opts)
   }
 
