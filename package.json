@@ -1,6 +1,6 @@
 {
   "name": "gister",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": "Josh Perez <josh@goatslacker.com> (http://github.com/goatslacker)",
   "description": "gist API wrapper for editing, creating and retrieving.",
   "homepage": "http://github.com/goatslacker/gister",

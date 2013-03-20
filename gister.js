@@ -1,4 +1,4 @@
-/*jshint asi: true, expr: true, curly: false */
+/*jshint asi: true, expr: true, curly: false, camelcase: false */
 var request = require('request')
 var EventEmitter = require('events').EventEmitter
 
@@ -7,6 +7,90 @@ var url = 'https://api.github.com'
 // Rate limiting
 var time = null
 var rate = 1
+
+function response(callbacks) {
+  var gist = this
+
+  return function (err, res, body) {
+    // return if there's an error
+    if (err) return gist.emit('error', err)
+
+    // update our rate limit counter
+    var limit = res.headers['x-ratelimit-remaining']
+    limit && (rate = limit)
+
+    // if we have a callback attached, call it
+    var cb = callbacks[res.statusCode]
+    if (cb) return cb(body, res)
+
+    var error = new Error(body.message)
+
+    // otherwise it's an error
+    return gist.emit('error', error, body, res)
+  }
+}
+
+function check_gist_id(gist_id) {
+  gist_id = gist_id || this.gist_id
+  if (!gist_id) throw new ReferenceError('No gist id provided')
+
+  return gist_id
+}
+
+function check_data(data) {
+  if (!data || typeof data !== 'object')
+    throw new TypeError('Expected data to be an Object')
+}
+
+function add_data(data) {
+  if (data.files) {
+    return data
+  }
+
+  var json = {
+    description: '',
+    files: {},
+    public: true
+  }
+
+  Object.keys(data).forEach(function (name) {
+    json.files[name] = { content: data[name] }
+  })
+
+  return json
+}
+
+function authenticate(opts) {
+  // authentication
+  if (Object.keys(opts.json).length > 0) {
+    if (this.token) {
+      opts.headers = { 'Authorization': 'token ' + this.token }
+    } else if (this.username && this.password) {
+      opts.headers = {
+        'Authorization': 'Basic ' +
+          new Buffer(this.username + ':' + this.password).toString('base64')
+      }
+    } else {
+      throw new ReferenceError(
+        'No OAuth token or username and password provided'
+      )
+    }
+  }
+
+  return opts
+}
+
+function xhr(opts, callbacks) {
+  // set the time if it isn't set
+  time = time || Date.now()
+
+  if (!this.isAnonymous) {
+    opts = authenticate.call(this, opts)
+  }
+
+  return this.request(opts, response.call(this, callbacks))
+}
+
 
 function api(uri, method) {
   var opts = {
@@ -84,82 +168,6 @@ api.fork = function (id) {
   return opts
 }
 
-function response(callbacks) {
-  var gist = this
-
-  return function (err, res, body) {
-    // return if there's an error
-    if (err) return gist.emit('error', err)
-
-    // update our rate limit counter
-    var limit = res.headers['x-ratelimit-remaining']
-    limit && (rate = limit)
-
-    // if we have a callback attached, call it
-    var cb = callbacks[res.statusCode]
-    if (cb) return cb(body, res)
-
-    // otherwise it's an error
-    return gist.emit('error', new Error(body.message), body, res)
-  }
-}
-
-function check_gist_id(gist_id) {
-  gist_id = gist_id || this.gist_id
-  if (!gist_id) throw new ReferenceError('No gist id provided')
-
-  return gist_id
-}
-
-function check_data(data) {
-  if (!data || typeof data !== 'object')
-    throw new TypeError('Expected data to be an Object')
-}
-
-function add_data(data) {
-  if (data.files) {
-    return data
-  }
-
-  var json = {
-    description: '',
-    files: {},
-    public: true
-  }
-
-  Object.keys(data).forEach(function (name) {
-    json.files[name] = { content: data[name] }
-  })
-
-  return json
-}
-
-function authenticate(opts) {
-  // authentication
-  if (Object.keys(opts.json).length > 0) {
-    if (this.token) {
-      opts.headers = { 'Authorization': 'token ' + this.token }
-    } else if (this.username && this.password) {
-      opts.headers = { 'Authorization': 'Basic ' + new Buffer(this.username + ':' + this.password).toString('base64') }
-    } else {
-      throw new ReferenceError('No OAuth token or username and password provided')
-    }
-  }
-
-  return opts
-}
-
-function xhr(opts, callbacks) {
-  // set the time if it isn't set
-  time = time || Date.now()
-
-  if (!this.isAnonymous) {
-      opts = authenticate.call(this, opts)
-  }
-
-  return this.request(opts, response.call(this, callbacks))
-}
-
 
 // ## Gist
 //
@@ -170,7 +178,8 @@ function xhr(opts, callbacks) {
 //
 // * __username__ GitHub username
 // * __password__ GitHub password
-// * __token__ The oAuth token that can be used for future requests instead of basic auth
+// * __token__ The oAuth token that can be used for future requests instead
+// of basic auth
 // * __gist_id__ (optional) The Gist ID
 function Gist(o) {
   EventEmitter.call(this)
