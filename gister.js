@@ -86,6 +86,12 @@ function xhr(opts, callbacks) {
 
   if (!this.isAnonymous) {
     opts = authenticate.call(this, opts)
+  } else {
+    // Anonymous gist require user-agent http header
+    // REF : http://developer.github.com/v3/#user-agent-required
+    opts.headers = {
+        'user-agent': 'gister'
+    },
   }
 
   return this.request(opts, response.call(this, callbacks))
