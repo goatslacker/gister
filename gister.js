@@ -86,12 +86,6 @@ function xhr(opts, callbacks) {
 
   if (!this.isAnonymous) {
     opts = authenticate.call(this, opts)
-  } else {
-    // Anonymous gist require user-agent http header
-    // REF : http://developer.github.com/v3/#user-agent-required
-    opts.headers = {
-        'user-agent': 'gister'
-    },
   }
 
   return this.request(opts, response.call(this, callbacks))
@@ -203,7 +197,12 @@ Gist.prototype = Object.create(EventEmitter.prototype)
 
 // Uses request to talk to GitHub API.
 Gist.prototype.request = function (opts, cb) {
-  return request(opts, cb)
+    // User-agent http header is required by Github API
+    // REF : http://developer.github.com/v3/#user-agent-required
+    opts.headers = {
+        'user-agent': 'gister'
+    },
+    return request(opts, cb)
 }
 
 Gist.prototype.get = function (gist_id, name) {
