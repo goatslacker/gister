@@ -201,7 +201,7 @@ Gist.prototype.request = function (opts, cb) {
     // REF : http://developer.github.com/v3/#user-agent-required
     opts.headers = {
         'user-agent': 'gister'
-    },
+    };
     return request(opts, cb)
 }
 
